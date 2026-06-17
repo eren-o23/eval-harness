@@ -1,0 +1,32 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Raw trace data — never commit real traces pulled from LangSmith/Corpus
+*.local.jsonl
+/traces/
+/data/
+
+# SQLite eval result stores
+*.sqlite
+*.sqlite3
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# OS / editor
+.DS_Store
