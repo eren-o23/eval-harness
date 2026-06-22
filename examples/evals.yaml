@@ -1,0 +1,14 @@
+evaluators:
+  - name: rfp_extraction_accuracy
+    type: llm_judge
+    target: output.extracted_fields        # dot-path into Trace
+    rubric: |
+      Score 1-5: does the extracted JSON correctly capture the funding amount,
+      application deadline, and eligibility criteria from the source RFP?
+    model: anthropic/claude-sonnet-4-6      # provider/model-name
+    threshold: 4                            # optional pass/fail cutoff (score >= 4)
+
+  - name: extraction_latency
+    type: threshold
+    target: metadata.total_latency_ms
+    max: 4000                               # fail if value exceeds this
