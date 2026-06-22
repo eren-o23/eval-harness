@@ -8,10 +8,17 @@ version = "0.1.0"
 description = "Framework-agnostic LLM agent trace eval harness"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "PyYAML>=6",
+    "anthropic>=0.39",
+]
 
 [project.optional-dependencies]
+openai = ["openai>=1.0"]   # only needed for OpenAI-compatible llm_judge providers
 dev = ["pytest"]
+
+[project.scripts]
+eval-harness = "eval_harness.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/eval_harness"]

@@ -39,6 +39,7 @@ class LLMJudgeEvaluator:
         value = resolve_path(trace, self.target)
         user = (
             f"Rubric:\n{self.rubric}\n\n"
+            f"Source input (for reference):\n{json.dumps(trace.input, indent=2, default=str)}\n\n"
             f"Target to evaluate:\n{json.dumps(value, indent=2, default=str)}"
         )
         raw = call(self.model, _SYSTEM, user)
