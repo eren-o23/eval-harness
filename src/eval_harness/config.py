@@ -18,9 +18,10 @@ import yaml
 from eval_harness.dotpath import PathResolutionError, resolve_path
 from eval_harness.evaluators.llm_judge import LLMJudgeEvaluator
 from eval_harness.evaluators.threshold import ThresholdEvaluator
+from eval_harness.evaluators.trajectory import TrajectoryEvaluator
 from eval_harness.models import Trace
 
-Evaluator = Union[LLMJudgeEvaluator, ThresholdEvaluator]
+Evaluator = Union[LLMJudgeEvaluator, ThresholdEvaluator, TrajectoryEvaluator]
 
 
 class ConfigError(ValueError):
@@ -51,6 +52,9 @@ def _build(entry: dict, index: int) -> Evaluator:
     where = f"evaluator '{name}'"
 
     etype = entry.get("type")
+    if etype == "trajectory":
+        return _build_trajectory(entry, name, where)
+
     target = entry.get("target")
     if not target:
         raise ConfigError(f"{where}: missing 'target'")
@@ -60,7 +64,7 @@ def _build(entry: dict, index: int) -> Evaluator:
     if etype == "llm_judge":
         return _build_llm_judge(entry, name, target, where)
     raise ConfigError(
-        f"{where}: unknown type {etype!r} (expected 'llm_judge' or 'threshold')"
+        f"{where}: unknown type {etype!r} (expected 'llm_judge', 'threshold' or 'trajectory')"
     )
 
 
@@ -93,8 +97,19 @@ def _build_llm_judge(entry: dict, name: str, target: str, where: str) -> LLMJudg
     )
 
 
+def _build_trajectory(entry: dict, name: str, where: str) -> TrajectoryEvaluator:
+    seq = entry.get("expected_sequence")
+    if not isinstance(seq, list) or not seq:
+        raise ConfigError(f"{where}: trajectory needs a non-empty 'expected_sequence' list")
+    if not all(isinstance(s, str) for s in seq):
+        raise ConfigError(f"{where}: expected_sequence must be a list of strings")
+    return TrajectoryEvaluator(name=name, expected_sequence=seq)
+
+
 def _validate_targets(evaluators: list[Evaluator], traces: list[Trace]) -> None:
     for ev in evaluators:
+        if getattr(ev, "target", None) is None:
+            continue  # trajectory has no target dot-path to validate
         if not any(_resolves(t, ev.target) for t in traces):
             raise ConfigError(
                 f"evaluator '{ev.name}': target '{ev.target}' does not resolve "

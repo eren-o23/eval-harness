@@ -12,3 +12,7 @@ evaluators:
     type: threshold
     target: metadata.total_latency_ms
     max: 4000                               # fail if value exceeds this
+
+  - name: tool_call_order
+    type: trajectory
+    expected_sequence: ["rfp_extraction", "grant_search", "loi_draft"]

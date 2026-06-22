@@ -73,11 +73,14 @@ def test_loads_example_config():
     assert [e.name for e in evaluators] == [
         "rfp_extraction_accuracy",
         "extraction_latency",
+        "tool_call_order",
     ]
     assert evaluators[0].type == "llm_judge"
     assert evaluators[0].model == "anthropic/claude-sonnet-4-6"
     assert evaluators[1].type == "threshold"
     assert evaluators[1].max == 4000
+    assert evaluators[2].type == "trajectory"
+    assert evaluators[2].expected_sequence == ["rfp_extraction", "grant_search", "loi_draft"]
 
 
 def test_unknown_type_rejected(tmp_path):
