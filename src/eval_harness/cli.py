@@ -14,6 +14,7 @@ from eval_harness import storage
 from eval_harness.adapters import from_jsonl
 from eval_harness.config import ConfigError, load_config
 from eval_harness.differ import DiffError, compute_diff, format_diff
+from eval_harness.reporter import ReportError, render
 from eval_harness.runner import format_summary, run_evaluations
 
 
@@ -46,11 +47,18 @@ def main(argv=None) -> int:
     diff_p.add_argument("version_b", help="version tag to compare against the baseline")
     diff_p.add_argument("--db", default="eval_results.sqlite", help="SQLite db path")
 
+    report_p = sub.add_parser("report", help="render a standalone report for one stored run")
+    report_p.add_argument("--version", required=True, help="version tag to report on")
+    report_p.add_argument("--format", choices=["md", "json"], default="md", help="output format")
+    report_p.add_argument("--db", default="eval_results.sqlite", help="SQLite db path")
+
     args = parser.parse_args(argv)
     if args.command == "run":
         return _cmd_run(args)
     if args.command == "diff":
         return _cmd_diff(args)
+    if args.command == "report":
+        return _cmd_report(args)
     return 1  # unreachable: argparse rejects unknown subcommands
 
 
@@ -90,4 +98,15 @@ def _cmd_diff(args) -> int:
         print(f"diff error: {e}", file=sys.stderr)
         return 2
     print(format_diff(diff))
+    return 0
+
+
+def _cmd_report(args) -> int:
+    conn = storage.connect(args.db)
+    try:
+        out = render(conn, args.version, args.format)
+    except ReportError as e:
+        print(f"report error: {e}", file=sys.stderr)
+        return 2
+    print(out)
     return 0
