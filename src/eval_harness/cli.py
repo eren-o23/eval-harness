@@ -13,6 +13,7 @@ from pathlib import Path
 from eval_harness import storage
 from eval_harness.adapters import from_jsonl
 from eval_harness.config import ConfigError, load_config
+from eval_harness.differ import DiffError, compute_diff, format_diff
 from eval_harness.runner import format_summary, run_evaluations
 
 
@@ -40,10 +41,17 @@ def main(argv=None) -> int:
     run_p.add_argument("--version", required=True, help="version tag to store results under")
     run_p.add_argument("--db", default="eval_results.sqlite", help="SQLite db path")
 
+    diff_p = sub.add_parser("diff", help="compare two stored runs and report regressions")
+    diff_p.add_argument("version_a", help="baseline version tag")
+    diff_p.add_argument("version_b", help="version tag to compare against the baseline")
+    diff_p.add_argument("--db", default="eval_results.sqlite", help="SQLite db path")
+
     args = parser.parse_args(argv)
     if args.command == "run":
         return _cmd_run(args)
-    return 1  # unreachable while 'run' is the only subcommand
+    if args.command == "diff":
+        return _cmd_diff(args)
+    return 1  # unreachable: argparse rejects unknown subcommands
 
 
 def _cmd_run(args) -> int:
@@ -71,4 +79,15 @@ def _cmd_run(args) -> int:
         print(f"Skipped {len(skipped)} (trace missing the evaluator's target field)")
     print()
     print(format_summary(evaluators, results, skipped))
+    return 0
+
+
+def _cmd_diff(args) -> int:
+    conn = storage.connect(args.db)
+    try:
+        diff = compute_diff(conn, args.version_a, args.version_b)
+    except DiffError as e:
+        print(f"diff error: {e}", file=sys.stderr)
+        return 2
+    print(format_diff(diff))
     return 0
