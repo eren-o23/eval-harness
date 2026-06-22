@@ -5,9 +5,6 @@ from any source, run YAML-defined evaluators against them, store results
 locally, and detect regressions between versions — no server, no account
 required.
 
-Built for [Corpus](https://github.com/eren-o23/corpus), an RFP intelligence
-pipeline. Usable with any agent that produces traces.
-
 ---
 
 ## What it does
